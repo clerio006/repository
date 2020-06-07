@@ -1,54 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Chat App</title>
-  <script defer src="http://localhost:3000/socket.io/socket.io.js"></script>
-  <script defer src="script.js"></script>
-  <style>
-    body {
-      padding: 0;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-    }
+<html>
+    <head>
+        <title>Chat</title>
+        <link rel="stylesheet" href="estilo.css">
+    </head>
+    <body>
+        <header>
+            <form>
+                <input autofocus type='text' id='msg' placeholder="Digite seu login" autocomplete="off" /> 
+                <button id="button1" type='submit'>Logar</button>
+            </form>
+        </header>
+        <ul id='messages'></ul>
+        <div id='status'></div>
 
-    #message-container {
-      width: 80%;
-      max-width: 1200px;
-    }
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            $(function(){
+                const socket = io()
+                socket.nickname = ''
 
-    #message-container div {
-      background-color: #CCC;
-      padding: 5px;
-    }
+                $('form').submit(function(){
+                    if(socket.nickname === ''){
+                        socket.nickname = $('#msg').val()
+                        socket.emit('login', socket.nickname)
 
-    #message-container div:nth-child(2n) {
-      background-color: #FFF;
-    }
+                        $('#msg').prop('placeholder', 'Digite uma mensagem');
+                        $('#button1').html('Enviar');
 
-    #send-container {
-      position: fixed;
-      padding-bottom: 30px;
-      bottom: 0;
-      background-color: white;
-      max-width: 1200px;
-      width: 80%;
-      display: flex;
-    }
+                        socket.on('status', function (msg) {
+                            $('#status').html(msg)
+                            console.log(msg)
+                        })
 
-    #message-input {
-      flex-grow: 1;
-    }
-  </style>
-</head>
-<body>
-  <div id="message-container"></div>
-  <form id="send-container">
-    <input type="text" id="message-input">
-    <button type="submit" id="send-button">Send</button>
-  </form>
-</body>
+                        $('#msg').keypress(function (evt) {
+                            if (socket.nickname === '') {
+                                return
+                            }
+
+                            socket.emit('status', socket.nickname + ' está escrevendo...')
+                        })
+
+                        $('#msg').keyup(function (evt) {
+                            socket.emit('status', '')
+                        })                        
+                    } else {
+                        socket.emit('chat msg', $('#msg').val())
+                    }
+
+                    $('#msg').val('')
+                    return false
+                })
+
+                socket.on('chat msg', function(msg){
+                    $('#messages').append($('<li>').text(msg))
+                })
+            })
+        </script>
+    </body>
 </html>
